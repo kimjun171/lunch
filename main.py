@@ -162,10 +162,10 @@ st.dataframe(
 )
 
 # -------------------------------------------------------------------
-# 3. 함께 나온 적 없는 짝 화면 추가
+# 3. 특정 메뉴 기준 - 함께 나온 적 없는 짝 분석
 # -------------------------------------------------------------------
 st.divider()
-st.subheader("🔍 함께 나온 적 없는 짝 분석")
+st.subheader("🔍 특정 메뉴 기준 함께 나온 적 없는 짝 분석")
 
 target_menu = st.selectbox(
     "조회할 메뉴 선택 (한 번도 함께 나오지 않은 메뉴 검색):",
@@ -202,3 +202,59 @@ else:
     st.info(
         f"[{target_menu}]와 함께 나온 적 없으면서 10일 이상 제공된 메뉴가 없습니다."
     )
+
+# -------------------------------------------------------------------
+# 4. 184일 동안 전체 중 한 번도 함께 나온 적이 없는 메뉴 조합 전체 목록
+# -------------------------------------------------------------------
+st.divider()
+st.subheader("❌ 184일 동안 한 번도 함께 나온 적이 없는 메뉴 조합 전체")
+
+col_zero1, col_zero2 = st.columns([2, 1])
+
+with col_zero1:
+    min_single_days = st.slider(
+        "각 메뉴의 최소 등장 일수 (너무 적게 등장한 메뉴 제외용):",
+        min_value=1,
+        max_value=30,
+        value=5,
+        step=1,
+        key="zero_pair_slider",
+    )
+
+# 1회도 함께 나온 적이 없는 전체 메뉴 쌍 계산
+zero_co_occurrence_pairs = []
+
+# 전체 가능한 2개 조합 중 pair_counts에 없거나 출현 횟수가 0인 쌍 탐색
+all_possible_pairs = combinations(unique_items, 2)
+
+for item_a, item_b in all_possible_pairs:
+    cnt_a = item_counts[item_a]
+    cnt_b = item_counts[item_b]
+
+    # 각 메뉴가 설정한 최소 일수 이상 나온 경우만 대상에 포함
+    if cnt_a >= min_single_days and cnt_b >= min_single_days:
+        if pair_counts[(item_a, item_b)] == 0:
+            zero_co_occurrence_pairs.append(
+                {
+                    "메뉴 A": item_a,
+                    "메뉴 A 등장 일수": cnt_a,
+                    "메뉴 B": item_b,
+                    "메뉴 B 등장 일수": cnt_b,
+                    "합계 등장 일수": cnt_a + cnt_b,
+                }
+            )
+
+zero_df = pd.DataFrame(zero_co_occurrence_pairs)
+
+st.write(
+    f"**각 메뉴가 최소 {min_single_days}일 이상 나왔지만 184일 동안 한 번도 함께 나오지 않은 조합 수:** {len(zero_df)}개"
+)
+
+if not zero_df.empty:
+    # 합계 등장 일수가 높은 순으로 정렬하여 많이 나왔는데 안 겹친 조합 위주로 보여줌
+    zero_df = zero_df.sort_values(
+        by="합계 등장 일수", ascending=False
+    ).reset_index(drop=True)
+    st.dataframe(zero_df, use_container_width=True)
+else:
+    st.info("해당 조건 만족하는 한 번도 겹치지 않은 메뉴 쌍이 없습니다.")
