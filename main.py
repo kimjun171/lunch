@@ -51,7 +51,6 @@ for tx in transactions:
         pair_counts[(p1, p2)] += 1
 
 rules = []
-# 전체 메뉴 쌍(combinations)에 대해 동시 출현 횟수를 파악 (동시 0회 포함)
 for item_a, item_b in combinations(unique_items, 2):
     count_ab = pair_counts[(item_a, item_b)]
     supp_ab = count_ab / total_days
@@ -64,4 +63,19 @@ for item_a, item_b in combinations(unique_items, 2):
     rules.append(
         {
             "조건": item_a,
-            "결과":
+            "결과": item_b,
+            "동시": count_ab,
+            "지지도": supp_ab,
+            "신뢰도": conf_a_b,
+            "향상도": lift_a_b,
+        }
+    )
+
+    # Direction 2: B -> A
+    conf_b_a = count_ab / item_counts[item_b] if item_counts[item_b] > 0 else 0
+    lift_b_a = conf_b_a / supp_a if supp_a > 0 else 0
+    rules.append(
+        {
+            "조건": item_b,
+            "결과": item_a,
+            "
